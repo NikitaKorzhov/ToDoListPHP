@@ -1,0 +1,5 @@
+    <td><span ng-if="!edit">{{a.name}}</span><input ng-if="edit" ng-model="a.name"/></td>
+    <td><span ng-if="!edit">{{a.email}}</span><input ng-if="edit" ng-model="a.email"/></td>
+    <td><span ng-if="!edit">{{a.task}}</span><textarea ng-if="edit" ng-model="a.task"/></textArea></td>
+    <td><span>{{a.edit}}</span></td>
+    <td><button class="btn btn-primary" ng-click="aler()" ng-if="y()">{{editText}}</button></td>

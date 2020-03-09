@@ -1,0 +1,184 @@
+<html ng-app="Myapp">
+
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular-cookies.js"></script>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+    
+  <base href="/todoList/">
+</head>
+
+<body>
+    <!-- Image and text -->
+    <nav class="navbar navbar-light bg-light">
+        <a class="navbar-brand" href="#">
+            <img src="https://getbootstrap.com/docs/4.4/assets/brand/bootstrap-solid.svg" width="30" height="30"
+                class="d-inline-block align-top" alt="">
+            ToDo list
+        </a>
+        <div class="my-2" ng-controller="sign">
+            <form class="form-inline" ng-if="!logined">
+                <label class="sr-only" for="inlineFormInputGroupUsername2">Username</label>
+                <div class="input-group mb-2 mr-sm-2">
+                    <div class="input-group-prepend">
+                        <div class="input-group-text">@</div>
+                    </div>
+                    <input type="text" class="form-control" id="inlineFormInputGroupUsername2" placeholder="Username"
+                        ng-model="user.login">
+                </div>
+
+                <label class="sr-only" for="inlineFormInputName2">Name</label>
+                <input type="text" class="form-control mb-2 mr-sm-2" id="inlineFormInputName2" placeholder="password"
+                    ng-model="user.password">
+
+
+                <button ng-click="signIn()" class="btn btn-primary mb-2">Submit</button>
+            </form>
+            <button class="btn btn-primary" ng-if="logined" ng-click="out()">Out</button>
+        </div>
+        
+    </nav>
+    <div ng-controller="mess" class="alert alert-{{alert.type}}" ng-class="type" role="alert">
+        {{alert.text}} 
+      </div>
+    <div>
+
+        <table class="table" ng-controller="application">
+            <tbody ng-controller="knj">
+                <tr tr-row ng-repeat="a in $parent.list"></tr>
+            </tbody>
+            <tfoot ng-controller="add">
+                <tr>
+                    <td><input type="text" ng-model="task.name" name="name"></td>
+                    <td><input type="text" name="email" ng-model="task.email"></td>
+                    <td><input type="text" name="task" ng-model="task.task"></td>
+                    
+                </tr>
+                <tr>
+                    <td><input type="submit" value="Добавить" ng-click="add()" /></td>
+                </tr>
+            </tfoot>
+        </table>
+        <div style="margin: 0 auto; text-align: center;" ng-controller="pagination">
+            <nav aria-label="Page navigation example">
+            <ul class="pagination">
+              <li class="page-item"  ng-repeat="x in [].constructor(page) track by $index"><a class="page-link" href="/todoList?page={{$index}}">{{$index}}</a></li>
+
+            </ul>
+          </nav></div>
+
+    </div>
+
+    <script>
+        var app = angular.module('Myapp', ["ngCookies"]).config(function($locationProvider) {
+    $locationProvider.html5Mode(true); 
+  });;
+        app.controller("mess",function($scope,$interval,$cookies){
+            $scope.alert=$cookies.get("alert")? $cookies.getObject("alert"):{};
+            $scope.type=$scope.alert.type;
+            $scope.cookies=$cookies
+            let i=0;
+            $interval(function(){
+                $scope.alert=$cookies.get("alert")? $cookies.getObject("alert"):{};
+            },100)
+        })
+        app.directive("trRow", function ($http,$cookies) {
+            return {
+                templateUrl: "views/fc.html",
+                link: function ($scope) {
+                   // console.log($cookies.get("l"));
+                   $cookies.put("alert","")
+                    $scope.edit = false;
+                    $scope.y=()=> String($cookies.get("l"))=="true";
+                    $scope.editText="edit";
+                    $scope.aler = () => {
+                        if($scope.y()){
+                            $cookies.put("alert","")
+                        if ($scope.edit) {
+                            $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+                            $http.post("controllers/a.php", { action: "update", answer: JSON.stringify($scope.a) }).then(y =>{
+                                $scope.a.edit="edited by admin";
+                                $scope.editText="edit"
+                                console.log(y.data)
+                                 $cookies.put("alert",JSON.stringify(y.data.alert))
+                                 });
+                        }
+                        else{$scope.editText="save"}
+                        $scope.edit = !$scope.edit;
+                    }
+                    }
+                }
+            }
+        })
+        app.controller("application",function($scope,$rootScope,$location,$cookies,$http,locationMy){
+            $rootScope.logined=String($cookies.get("l"))=="true";
+            $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+            $scope.k=locationMy.searchToObject("page").page;
+            $http.post("controllers/a.php", { action: "load", page:$scope.k,count:3 }).then(y =>{ console.log(y.data); $scope.list = y.data})
+            $scope.update=()=>{
+                $http.post("controllers/a.php", { action: "load", answer: "",page:$scope.k,count:3 }).then(y => $scope.list = y.data)
+            }
+        })
+        app.controller('sign', function ($scope,$rootScope,$cookies, $http) {
+            $scope.llogined=$rootScope.logined;
+            $scope.user = {login:"",password:""}
+            $scope.signIn = () => {
+               $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+            $http.post("controllers/autorize.php", { action: "in", login: $scope.user.login,password:$scope.user.password }).then(y =>{ 
+                if(y.data!=""){
+                console.log(y.data);
+                 $cookies.put("l",y.data.l)
+                 $rootScope.logined=true;
+                }
+            })
+                
+            };
+            $scope.out=()=>{
+                $cookies.put("l",false);
+                $cookies.put("alert","");
+                $rootScope.logined=false;
+            }
+            
+        })
+        app.controller('knj', function ($scope) {
+            
+        })
+
+        app.controller('add', function ($scope, $http) {
+            $scope.add = () => {
+                console.log($scope.task);
+                $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+                $http.post("controllers/a.php", { action: "add", answer: JSON.stringify($scope.task) }).then(y => $scope.$parent.update())
+            }
+        })
+
+
+        app.controller("pagination",function($scope,$http){
+            $scope.page=0
+            $http.defaults.headers.post["Content-Type"] = "application/x-www-form-urlencoded";
+            $http.post("controllers/a.php", { action: "pages", answer: "" }).then(y => $scope.page= Math.ceil( y.data.answer))
+        })
+        app.factory("locationMy",function(){
+            return{
+                searchToObject:()=> {
+  var pairs = window.location.search.substring(1).split("&"),
+    obj = {},
+    pair,
+    i;
+
+  for ( i in pairs ) {
+    if ( pairs[i] === "" ) continue;
+
+    pair = pairs[i].split("=");
+    obj[ decodeURIComponent( pair[0] ) ] = decodeURIComponent( pair[1] );
+  }
+
+  return obj;
+}
+            }
+        })
+
+    </script>
+</body>
+
+</html>
